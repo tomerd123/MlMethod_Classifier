@@ -181,4 +181,5 @@ for i in range(len(testSegsCur)):
     print(str(i)+" is: "+str(avgTotal))
 
 
+
 print("finished high NGram")
