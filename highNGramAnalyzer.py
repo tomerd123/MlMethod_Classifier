@@ -69,7 +69,6 @@ def createTrainCorpus (i=0,maxN=50):
 
         return trainTerms
 
-
 def createTestSetWithHighNGrams(i=0, maxN=50):
     with io.open('E:/challenge/training_data/User' + str(i), 'rt', encoding="utf8") as file:
         testSegments = []
@@ -143,42 +142,6 @@ def calcCosimBetweenTwoComponents(corpusDic, comp1Dic,comp2Dic):
 
         cosimPerNgList[ng]=float(numeratorSum/(sumTfIdfPerNgComp1[ng]*sumTfIdfPerNgComp2[ng]))
     return cosimPerNgList
-
-
-testSegsCur = createTestSetWithHighNGrams(5, 10)
-
-for i in range(len(testSegsCur)):
-
-    distDic1 = createNGramDistDic(testSegsCur[i], 10)
-
-    for user in range(10):
-        avgTotal = 0.0
-        trainSegs = createTrainSetWithHighNGrams(user, 10)
-        testSegs = createTestSetWithHighNGrams(user, 10)
-        corpus = createTrainCorpus(user, 10)
-
-        sVsTrainAvgScore=0.0
-        for j in range(50):
-
-
-            distDic2=createNGramDistDic(trainSegs[j],10)
-            cosimList=calcCosimBetweenTwoComponents(corpus,distDic1,distDic2)
-            cosimListAvg=np.array(cosimList.values()).mean()
-            sVsTrainAvgScore+=cosimListAvg
-        sVsTrainAvgScore/=50.0
-
-        sVsTestAvgScore = 0.0
-        for j in range(100):
-            distDic2 = createNGramDistDic(testSegs[j], 10)
-            cosimList = calcCosimBetweenTwoComponents(corpus, distDic1, distDic2)
-            cosimListAvg = np.array(cosimList.values()).mean()
-            sVsTestAvgScore += cosimListAvg
-        sVsTestAvgScore /= 100.0
-        avgTotal+=(sVsTrainAvgScore*0.33333+sVsTestAvgScore*0.666)
-
-    avgTotal/=10
-
-    print(str(i)+" is: "+str(avgTotal))
 
 
 
