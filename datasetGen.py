@@ -155,6 +155,26 @@ def createTestSetForUser (i=0,maxN=50,splitSize=10):
 
     #foreach record
     for seg1 in range(len(testSegs)):
+        """
+        if seg1==21 or 1>=1 :
+            sum=0.0
+            sum2=0.0
+            distDic1 = hn.createNGramDistDic(testSegs[seg1], maxN)
+            with open('Five21,txt','w') as f:
+
+                for ng in distDic1:
+                    for k in distDic1[ng]:
+                        f.write(str(k)+" : "+str(distDic1[ng][k])+str("\n"))
+                        if corpus.__contains__(k) and distDic1[ng][k]>1:
+                            sum+=(float(ng)**3)*math.fabs((float(corpus[k][0])/float(corpus[k][1])-float(distDic1[ng][k]))**2)
+                        elif distDic1[ng][k]>1:
+                            sum2+=(float(ng)**3)*(float(distDic1[ng][k])**2)
+                print(str(seg1)+"_"+str(sum)+"_"+str(sum2))
+            with open('corpus5.txt','w') as f2:
+                for k in corpus:
+                    f2.write(str(k)+" : "+str(corpus[k])+"\n")
+            #print("reached 21")
+        """
         distDic1 = hn.createNGramDistDic(testSegs[seg1], maxN)
         fVec=[]
         cosimList = []
