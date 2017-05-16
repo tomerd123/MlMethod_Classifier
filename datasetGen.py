@@ -22,14 +22,16 @@ def getLabelsMatrix ():
             labels.append(labList)
     return labels
 
-def createTrainSetForUser (i=0,maxN=50):
+def createTrainSetForUser (i=0,maxN=50,splitSize=10):
 
 
-    attributesLists = [['cosim' + str(k) for k in range(50)], ['pos' + str(k) for k in range(50)],
-                       ['py' + str(k) for k in range(50)],
-                       ['lev' + str(k) for k in range(50)], ['lcs' + str(k) for k in range(50)]]
+    attributesLists = [['cosim' + str(k) for k in range(150)], ['pos' + str(k) for k in range(150)],
+                       ['py' + str(k) for k in range(150)],
+                       ['lev' + str(k) for k in range(150)], ['lcs' + str(k) for k in range(150)],['cosMini' + str(k) for k in range(150)],
+                       ['jackSim' + str(k) for k in range(150)]]
 
     attrVec = list(itertools.chain(*attributesLists))
+    attrVec.append('avgCosim')
     attrVec.append('label')
 
     attrVec = [s.replace("'", "") for s in attrVec]
@@ -39,12 +41,17 @@ def createTrainSetForUser (i=0,maxN=50):
         file1.write(unicode(str(attrVec)[1:-1])+str("\n"))
 
     trainSegs = hn.createTrainSetWithHighNGrams(i, maxN)
-
+    trainSegsTotal=[]
+    for k in range(i,i+1):
+        trainSegsTotal.extend(hn.createTrainSetWithHighNGrams(k,maxN))
+        trainSegsTotal.extend(hn.createTestSetWithHighNGrams(k,maxN))
     cosimList=[]
     pyList=[]
     levList=[]
     lcsList=[]
     posList=[]
+    cosMiniList=[]
+    jackList=[]
 
     corpus = hn.createTrainCorpus(i, maxN)
 
@@ -57,8 +64,10 @@ def createTrainSetForUser (i=0,maxN=50):
         levList = []
         lcsList = []
         posList = []
+        cosMiniList = []
+        jackList = []
 
-        for seg2 in trainSegs:
+        for seg2 in trainSegsTotal:
 
             #cosinus similarity
             distDic2=hn.createNGramDistDic(seg2,maxN)
@@ -87,7 +96,20 @@ def createTrainSetForUser (i=0,maxN=50):
             pos=dma.calculatePosSimilarity(seg1,seg2)
             posList.append(pos)
 
-        list2d = [[np.array(avgSim.values()).mean() for avgSim in cosimList],posList,pyList,levList,lcsList]
+            #cosMini sim
+
+            cosMi=hn.calcSimPerMiniSeg(seg1,seg2,corpus,splitSize,maxN)
+            cosMiniList.append(cosMi)
+
+            #Jack-sim
+
+            jackS=hn.calcJackardTwoSegs(distDic1,distDic2)
+            jackList.append(jackS)
+
+
+        #list2d = [[np.array(avgSim.values()).mean() for avgSim in cosimList],posList,pyList,levList,lcsList]
+        list2d = [[np.array(avgSim.values()).mean() for avgSim in cosimList],posList,pyList,levList,lcsList,cosMiniList,jackList,[np.array([np.array(avgSim.values()).mean() for avgSim in cosimList]).mean()]]
+
         fVec= list(itertools.chain(*list2d))
 
         #get labels matrix
@@ -99,14 +121,15 @@ def createTrainSetForUser (i=0,maxN=50):
             file1.write(unicode(str(fVec)[1:-1])+str("\n"))
 
 
-def createTestSetForUser (i=0,maxN=50):
-
-
-    attributesLists = [['cosim' + str(k) for k in range(50)], ['pos' + str(k) for k in range(50)],
-                       ['py' + str(k) for k in range(50)],
-                       ['lev' + str(k) for k in range(50)], ['lcs' + str(k) for k in range(50)]]
+def createTestSetForUser (i=0,maxN=50,splitSize=10):
+    attributesLists = [['cosim' + str(k) for k in range(150)], ['pos' + str(k) for k in range(150)],
+                       ['py' + str(k) for k in range(150)],
+                       ['lev' + str(k) for k in range(150)], ['lcs' + str(k) for k in range(150)],
+                       ['cosMini' + str(k) for k in range(150)],
+                       ['jackSim' + str(k) for k in range(150)]]
 
     attrVec = list(itertools.chain(*attributesLists))
+    attrVec.append("avgCosim")
     attrVec.append('label')
 
     attrVec = [s.replace("'", "") for s in attrVec]
@@ -115,13 +138,18 @@ def createTestSetForUser (i=0,maxN=50):
     with io.open('E:/challenge/files/ds-test' + str(i) + '.csv', 'wt', encoding="utf8") as file1:
         file1.write(unicode(str(attrVec)[1:-1])+str("\n"))
 
-    trainSegs = hn.createTrainSetWithHighNGrams(i, maxN)
+    trainSegs=[]
+    for k in range(i,i+1):
+        trainSegs.extend(hn.createTrainSetWithHighNGrams(k, maxN))
+        trainSegs.extend(hn.createTestSetWithHighNGrams(k,maxN))
     testSegs=hn.createTestSetWithHighNGrams(i,maxN)
     cosimList=[]
     pyList=[]
     levList=[]
     lcsList=[]
     posList=[]
+    cosMiniList = []
+    jackList = []
 
     corpus = hn.createTrainCorpus(i, maxN)
 
@@ -134,6 +162,9 @@ def createTestSetForUser (i=0,maxN=50):
         levList = []
         lcsList = []
         posList = []
+        cosMiniList=[]
+        jackList=[]
+
 
         for seg2 in trainSegs:
 
@@ -164,7 +195,21 @@ def createTestSetForUser (i=0,maxN=50):
             pos=dma.calculatePosSimilarity(testSegs[seg1],seg2)
             posList.append(pos)
 
-        list2d = [[np.array(avgSim.values()).mean() for avgSim in cosimList],posList,pyList,levList,lcsList]
+            # cosMini sim
+
+            cosMi = hn.calcSimPerMiniSeg(testSegs[seg1], seg2, corpus, splitSize, maxN)
+            cosMiniList.append(cosMi)
+
+            # Jack-sim
+
+            jackS = hn.calcJackardTwoSegs(distDic1, distDic2)
+            jackList.append(jackS)
+
+
+            # list2d = [[np.array(avgSim.values()).mean() for avgSim in cosimList],posList,pyList,levList,lcsList]
+        list2d = [[np.array(avgSim.values()).mean() for avgSim in cosimList], posList, pyList, levList, lcsList,
+                  cosMiniList, jackList, [np.array([np.array(avgSim.values()).mean() for avgSim in cosimList]).mean()]]
+
         fVec= list(itertools.chain(*list2d))
 
         #get labels matrix
@@ -177,7 +222,12 @@ def createTestSetForUser (i=0,maxN=50):
 
 
 
-for i in range(39,40):
-    createTestSetForUser(i,10)
+for i in range(5,6):
+
+    print("Started ds "+str(i))
+    #createTrainSetForUser(i,10,25)
+    createTestSetForUser(i,10,25)
+    print("\n\nfinished ds "+str(i))
+
 
 

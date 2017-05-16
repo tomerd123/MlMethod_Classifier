@@ -4,7 +4,7 @@ from itertools import repeat
 import io
 import csv
 import numpy as np
-
+import DistanceMeasuresAnalyzer as dm
 import math
 import random
 from statistics import mean
@@ -143,6 +143,63 @@ def calcCosimBetweenTwoComponents(corpusDic, comp1Dic,comp2Dic):
         cosimPerNgList[ng]=float(numeratorSum/(sumTfIdfPerNgComp1[ng]*sumTfIdfPerNgComp2[ng]))
     return cosimPerNgList
 
+#each seg is a list of terms, split is the batch splitting of one seg, maxN is maximum ng in those batch split
+def calcSimPerMiniSeg (seg1,seg2,corpusDic,splitSize,maxN):
+
+
+    splitS1=[seg1[i:i + splitSize] for i in xrange(0, len(seg1), splitSize)]
+    splitS2=[seg2[i:i + splitSize] for i in xrange(0, len(seg2), splitSize)]
+
+    totalSim=0.0
+    countSplits=math.ceil(100/splitSize)
+
+    for i in range(len(splitS1)):
+
+        #cosim between mini-seg
+        distDic1 = createNGramDistDic(splitS1[i], maxN)
+        distDic2 = createNGramDistDic(splitS2[i], maxN)
+        coSim=np.array(calcCosimBetweenTwoComponents(corpusDic,distDic1,distDic2).values()).mean()
+
+        #py
+
+        simPy=dm.pySim(splitS1[i],splitS2[i])
+
+        #lev
+
+        simLev=1.0-dm.levenshtein(splitS1[i],splitS2[i])
+
+        #lcs
+
+        simLCS=dm.nLCS(splitS1[i],splitS2[i],dm.lcs_length(splitS1[i],splitS2[i]))
+
+        #pos
+
+        simPos=dm.calculatePosSimilarity(splitS1[i],splitS2[i])
+
+
+        totalSim+=(simPy+simLev+simLCS+simPos+coSim)
+
+
+    totalSim=float(totalSim/(countSplits*5.0))
+
+    return totalSim
+
+#each distDic is a dic of ngrams dics
+def calcJackardTwoSegs(distDic1,distDic2):
+
+    both=set()
+    union=set()
+
+    for ng in distDic2:
+        for t in distDic2[ng]:
+            union.add(t)
+    for ng in distDic1:
+        for t in distDic1[ng]:
+            if distDic2[ng].__contains__(t):
+                both.add(t)
+            union.add(t)
+    jackSim=float(float(len(both))/float(len(union)))
+    return jackSim
 
 
 
