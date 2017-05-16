@@ -166,7 +166,7 @@ def calcSimPerMiniSeg (seg1,seg2,corpusDic,splitSize,maxN):
 
         #lev
 
-        simLev=1.0-dm.levenshtein(splitS1[i],splitS2[i])
+        simLev=1.0-float(dm.levenshtein(splitS1[i],splitS2[i]))/100.0
 
         #lcs
 
